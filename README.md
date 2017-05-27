@@ -1,1 +1,3 @@
 # PlantEvolution
+
+This is my first foray into the world of evolutionary and genetic algorithms. The goal of this endeavor is to learn more about how genetic algorithms work and how a evolution can be simulated via a computer. This project will be relatively simple one (hopefully) where I will simulate the evolution of the shape of a 2-dimensional plant so that it maximizes its sunlight collection throughout the day. 
