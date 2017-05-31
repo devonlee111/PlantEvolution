@@ -1,4 +1,5 @@
 import java.awt.geom.Line2D;
+import java.util.ArrayList;
 import java.util.Arrays;
 import javafx.stage.Stage;
 import javafx.application.Application;
@@ -9,18 +10,44 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 
 public class Main extends Application {
-	double pixPIn = 5; 
+	double pixPIn = 10; 
+	
+	double centerX = 450;
+	double centerY = 900;
+	
 	@Override
 	public void start(Stage primaryStage) {
 		Group root = new Group();
 		Scene scene = new Scene(root, 900, 900, Color.SKYBLUE);
+	
+		//Plant test = new Plant("1111111011101111111111111111111111111111111000000000000000");
+		Plant test = new Plant();
+		System.out.println(test.stemLength() + " | " + test.leafSize() + " | " + test.stemAngle());
+		ArrayList<Point> points = test.processPlant();
+		int i = 0;
+		double x1 = 0;
+		double y1 = 0;
+		double x2 = 0;
+		double y2 = 0;
+		for (Point point : points) {
+			if (i % 2 == 0) {
+				x1 = point.x;
+				y1 = point.y;
+			}
+			if (i % 2 == 1) {
+				x2 = point.x;
+				y2 = point.y;
+				Line temp = new Line((x1 * pixPIn) + centerX, (-y1 * pixPIn) + centerY, (x2 * pixPIn) + centerX, (-y2 * pixPIn) + centerY);
+				root.getChildren().addAll(temp);
+				System.out.println(x1 + ", " + y1 + " | " + x2 + ", " + y2);
+			}
+			i++;
+		}
 		
-		Circle center = new Circle (0 * pixPIn, 0 * pixPIn, 7 * pixPIn);
-		center.setFill(Color.GREEN);
-		Circle other = new Circle(60 * pixPIn, 60 * pixPIn, 7 * pixPIn);
-		other.setFill(Color.GREEN);
-		root.getChildren().addAll(center, other);
+		primaryStage.setScene(scene);
+		primaryStage.show();
 		
+		/*
 		double botX, botY, endX, endY, topX, topY;
 		double theta = 0;
 		double thetaD;
@@ -59,12 +86,19 @@ public class Main extends Application {
 		}
 		Arrays.sort(generation);
 		System.out.println(generation[0].stemLength() + " | " + generation[0].leafSize() + " | " + generation[0].stemAngle());
+		*/
 	}
-	*/
+	
 	public void calculateFitness(Plant plant) {
+		double thetaD = -90;
+		double theta;
 		for (int i = 0; i < 180; i++) {
 			
 		}
+	}
+	
+	public void drawPlant(Plant plant) {
+		
 	}
 	
 	public static void main(String[] args) {
