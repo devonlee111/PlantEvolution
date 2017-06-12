@@ -1,11 +1,13 @@
-import java.util.ArrayList;
-
 public class Plant implements Comparable<Plant> {
-	private String trunkCode = "AGTT";
-	private String branchCode = "GCGA";
+	// Specific genetic sequences that signify the start of a valid gene
+	// Trunks specify the main body of the plant with branches and trunks starting at the end of each trunk segment.
+	private String trunkCode = "AT";
+	// Branches specify branches of the plant that can't split into more branches and have leaves at the end of them.
+	private String branchCode = "CG";
+	// The nucleotides used in a plant's genome with the index of each nucleotide being the value of the nucleotide in quaternary.
 	private String nucleotides = "ATCG";
-	private ArrayList<Point> leaves = new ArrayList<Point>();
 	private String genome = "";
+	// The x position on the ground where the plant should start from.
 	private double groundPos;
 	private double fitness;
 	
@@ -14,10 +16,9 @@ public class Plant implements Comparable<Plant> {
 		this.groundPos = groundPos;
 		genome += branchCode;
 		genome += "GGAAAA";
-		for (int i = 0; i < 190; i++) {
+		for (int i = 0; i < 152; i++) {
 			genome += 'A';
 		}
-		System.out.println(genome);
 	}
 	
 	// Create a new plant from the genes of 2 parent plants
@@ -25,29 +26,28 @@ public class Plant implements Comparable<Plant> {
 		// Randomly choose genes from each parent to put into the offspring's genes.
 		this.groundPos = groundPos;
 		for (int i = 0; i < 20; i++) {
-			int geneIndex = 10 * i;
+			int geneIndex = 8 * i;
 			int parent = (int)(Math.random() * 100) + 1;
 			if (parent <= 50) {
-				genome += p1.genome.substring(geneIndex, geneIndex + 10);
+				genome += p1.genome.substring(geneIndex, geneIndex + 8);
 			}
 			else {
-				genome += p2.genome.substring(geneIndex, geneIndex + 10);
+				genome += p2.genome.substring(geneIndex, geneIndex + 8);
 			}
 		}
 		// Give each nucleotide in the plant a very small chance to mutate into a different nucleotide.
 		char[] temp = genome.toCharArray();
 		for (int i = 0; i < genome.length(); i++) {
-			int mutationChance = (int)(Math.random() * 1000);
+			int mutationChance = (int)(Math.random() * 100);
 			if (mutationChance == 0) {
 				char newNucleotide;
 				do {
 					newNucleotide = nucleotides.charAt((int)(Math.random() * 4));
-				} while(newNucleotide != temp[i]);
+				} while(newNucleotide == temp[i]);
 				temp[i] = newNucleotide;
 			}
 		}
 		genome = new String(temp);
-		System.out.println(genome);
 	}
 	
 	// Comparison for the sorting of plants based on their fitness.
@@ -66,52 +66,56 @@ public class Plant implements Comparable<Plant> {
 		this.fitness = fitness;
 	}
 	
+	// Return a point with x being the groundPos of the plant and y being 0
 	public Point groundPos() {
 		return new Point(groundPos, 0);
 	}
 	
+	// Check whether the gene at the given index is valid (-1) a trunk (0) or a branch (1)
 	public int geneType(int geneIndex) {
-		if(genome.substring(geneIndex, geneIndex + 4).equals(branchCode)) {
-			return 1;
-		}
-		if(genome.substring(geneIndex, geneIndex + 4).equals(trunkCode)) {
+		if(genome.substring(geneIndex, geneIndex + 2).equals(trunkCode)) {
 			return 0;
+		}
+		if(genome.substring(geneIndex, geneIndex + 2).equals(branchCode)) {
+			return 1;
 		}
 		return -1;
 	}
 	
+	// Return the angle of the branch/trunk at the gene starting at the given index.
 	public double branchAngle(int geneIndex) {
 		double angle = 0.0;
-		char[] nucleotides = genome.substring(geneIndex + 6, geneIndex + 10).toCharArray();
+		char[] nucleotides = genome.substring(geneIndex + 4, geneIndex + 8).toCharArray();
+		// Get the string of nucleotides that represent the angle and convert it to its quaternary representation.
 		String temp = "";
 		for (int i = 0; i < 4; i++) {
 			temp += Integer.toString(this.nucleotides.indexOf(nucleotides[i]));
 		}
+		// Parse the quaternary string to an integer.
 		angle = Integer.parseInt(temp, 4);
-		System.out.println(angle);
+		// Make the angle negative if it goes above half the maximum angle.
+		// This does mean -0 angle is possible giving 0 a slightly higher chance of being represented
 		if (angle > 127) {
 			angle = 128 - angle;
 		}
 		return angle;
 	}
 	
+	// Return the angle of the branch/trunk at the gene starting at the given index.
 	public double branchLength(int geneIndex) {
 		double length = 0.0;
-		char[] nucleotides = genome.substring(geneIndex + 4, geneIndex + 6).toCharArray();
+		char[] nucleotides = genome.substring(geneIndex + 2, geneIndex + 4).toCharArray();
+		// Get the string of nucleotides that represent the angle and convert it to its quaternary representation.
 		String temp = "";
 		for (int i = 0; i < 2; i++) {
 			temp += Integer.toString(this.nucleotides.indexOf(nucleotides[i]));
 		}
+		// Parse the quaternary string to an integer.
 		length = Integer.parseInt(temp, 4);
 		return length + 1;
 	}
-
-	// Process the genome to get the structure of the plant
-	public ArrayList<Point> processPlant() {
-		return null;
-	}
 	
-	public ArrayList<Point> getLeafPos() {
-		return leaves;
+	public String Genome() {
+		return genome;
 	}
 }
