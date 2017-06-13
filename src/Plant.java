@@ -14,11 +14,11 @@ public class Plant implements Comparable<Plant> {
 	// Create a new plant with a basic genome.
 	public Plant(double groundPos) {
 		this.groundPos = groundPos;
-		genome += branchCode;
-		genome += "GGAAAA";
 		for (int i = 0; i < 152; i++) {
 			genome += 'A';
 		}
+		genome += branchCode;
+		genome += "GGAAAA";
 	}
 	
 	// Create a new plant from the genes of 2 parent plants
