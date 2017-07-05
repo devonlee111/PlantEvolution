@@ -1,15 +1,22 @@
+import java.util.ArrayList;
+
 public class Plant implements Comparable<Plant> {
 	// Specific genetic sequences that signify the start of a valid gene
 	// Trunks specify the main body of the plant with branches and trunks starting at the end of each trunk segment.
 	private String trunkCode = "AT";
+	
 	// Branches specify branches of the plant that can't split into more branches and have leaves at the end of them.
 	private String branchCode = "CG";
+	
 	// The nucleotides used in a plant's genome with the index of each nucleotide being the value of the nucleotide in quaternary.
 	private String nucleotides = "ATCG";
 	private String genome = "";
+	
 	// The x position on the ground where the plant should start from.
 	private double groundPos;
 	private double fitness;
+	public final double LEAFSIZE = 2.5;
+	private ArrayList<Point> leafPos = new ArrayList<Point>();
 	
 	// Create a new plant with a basic genome.
 	public Plant(double groundPos) {
@@ -62,8 +69,24 @@ public class Plant implements Comparable<Plant> {
 		return 1;
 	}
 	
+	public void setGenome(String genome) {
+		this.genome = genome;
+	}
+	
 	public void setFitness(double fitness) {
 		this.fitness = fitness;
+	}
+	
+	public void addFitness(double fitnessIncrease) {
+		fitness += fitnessIncrease;
+	}
+	
+	public double getFitness() {
+		return fitness;
+	}
+
+	public void setGroundPos(double groundPos) {
+		this.groundPos = groundPos;
 	}
 	
 	// Return a point with x being the groundPos of the plant and y being 0
@@ -80,6 +103,32 @@ public class Plant implements Comparable<Plant> {
 			return 1;
 		}
 		return -1;
+	}
+	
+	public void addLeaf(Point leaf) {
+		//System.out.println(leaf.x + ", " + leaf.y);
+		if (!hasLeaf(leaf)) {
+			leafPos.add(leaf);
+		}
+	}
+	
+	public boolean hasLeaf(Point leaf) {
+		for (Point existingLeaf : leafPos) {
+			if (existingLeaf.x == leaf.x && existingLeaf.y == leaf.y) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean pointInLeaf(Point p) {
+		for (Point leaf : leafPos) {
+			MyCircle temp = new MyCircle(leaf.x, leaf.y, LEAFSIZE);
+			if (temp.contains(p)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	// Return the angle of the branch/trunk at the gene starting at the given index.
@@ -115,7 +164,7 @@ public class Plant implements Comparable<Plant> {
 		return length + 1;
 	}
 	
-	public String Genome() {
+	public String genome() {
 		return genome;
 	}
 }

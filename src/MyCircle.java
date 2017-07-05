@@ -34,7 +34,7 @@ public class MyCircle {
 
 	// Returns true if the MyCircle contains a given point.
 	public boolean contains(Point p) {
-		return Math.sqrt(Math.pow(p.x - this.x, 2) + Math.pow(p.y - this.y, 2)) <= radius;
+		return Math.pow(p.x - this.x, 2) + Math.pow(p.y - this.y, 2) <= radius;
 	}
 	
 	// Find the points of intersection of a line and a MyCircle
