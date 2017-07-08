@@ -53,7 +53,7 @@ public class Main extends Application {
 				drawAllPlants(root);
 				generations++;
 				// Write the generation and fitness info the the screen.
-				t.setText("Generation Number: " + Integer.toString(generations) + "\t\tMax Fitness " + Double.toString(maxFitness) + "\t\tMin Fitness " + Double.toString(minFitness));
+				t.setText("Generation Number: " + Integer.toString(generations) + "\nMax Fitness " + Double.toString(maxFitness) + "\nMin Fitness " + Double.toString(minFitness));
 				root.getChildren().addAll(t);
 				
 				// Limit to the maximum generations if desired.
@@ -214,7 +214,7 @@ public class Main extends Application {
 				}
 				light.pos.y --;						// Decrease the altitude of the point of light. 
 				// Used to create a bias for taller or shorter plants if desired.
-				//light.strength -= 0.1;
+				//light.strength += 0.001;
 			}
 		}
 		// Shuffle and sort the plants by fitness.
