@@ -230,19 +230,11 @@ public class Main extends Application {
 	// Remove the half of the plants that are the least fit.
 	public void removeUnfit() {
 		int half = (plants.size() / 2);
-		for (Plant plant : plants) {
-			System.out.println(plant.getFitness());
-		}
-		System.out.println();
 		for (int i = plants.size() - 1; i >= half; i--) {
 			// Add the position where the plants emerge from the ground to the ArrayList of open positions.
 			plantPos.add(plants.get(half).groundPos().x);
 			plants.remove(half);
 		}
-		for (Plant plant : plants) {
-			System.out.println(plant.getFitness());
-		}
-		System.out.println();
 	}
 	
 	public static void main(String[] args) {
