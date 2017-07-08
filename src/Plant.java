@@ -45,7 +45,7 @@ public class Plant implements Comparable<Plant> {
 		// Give each nucleotide in the plant a very small chance to mutate into a different nucleotide.
 		char[] temp = genome.toCharArray();
 		for (int i = 0; i < genome.length(); i++) {
-			int mutationChance = (int)(Math.random() * 100);
+			int mutationChance = (int)(Math.random() * 1000);
 			if (mutationChance == 0) {
 				char newNucleotide;
 				do {
@@ -129,6 +129,10 @@ public class Plant implements Comparable<Plant> {
 			}
 		}
 		return false;
+	}
+	
+	public ArrayList<Point> getLeaves() {
+		return leafPos;
 	}
 	
 	// Return the angle of the branch/trunk at the gene starting at the given index.
