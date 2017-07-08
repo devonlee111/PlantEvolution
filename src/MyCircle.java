@@ -13,10 +13,12 @@ public class MyCircle {
 		this.radius = radius;
 	}
 	
+	// Calculate and return the area of this circle.
 	public double Area() {
 		return Math.PI * Math.pow(radius, 2);
 	}
 	
+	// Set the center of this circle to the given coordinates.
 	public void setCenter(double x, double y) {
 		this.x = x;
 		this.y = y;
@@ -37,10 +39,11 @@ public class MyCircle {
 		return Math.pow(p.x - this.x, 2) + Math.pow(p.y - this.y, 2) <= radius;
 	}
 	
-	// Find the points of intersection of a line and a MyCircle
-	// The end points of the line are defined by points A, B.
-	// The center of the MyCircle is defined by point C.
-	// The point on the line closest to the MyCircle center is defined by point E.
+	/* Find the points of intersection of a line and a MyCircle
+	 * The end points of the line are defined by points A, B.
+	 * The center of the MyCircle is defined by point C.
+	 * The point on the line closest to the MyCircle center is defined by point E.
+	*/
 	public Point[] intersect(Line2D line) {
 		Point[] intersections = new Point[3];
 		double dx = line.getX2() - line.getX1();
@@ -74,6 +77,7 @@ public class MyCircle {
 		return intersections;
 	}
 	
+	// Check if another circle intersects this circle.
 	public boolean intersects(MyCircle c) {
 		return Math.sqrt(Math.pow((c.x - x), 2) + Math.pow((c.y - y), 2)) < c.radius + radius;
 	}
@@ -94,6 +98,7 @@ public class MyCircle {
 		return area;
 	}
 	
+	// Get the area of intersection of this circle and another circle.
 	public double intersectionArea(MyCircle C) {
 		if (!intersects(C)) {
 			return -1;
