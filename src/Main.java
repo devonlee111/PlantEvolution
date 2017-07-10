@@ -49,8 +49,8 @@ public class Main extends Application {
 		final AnimationTimer timer = new AnimationTimer() {
 			@Override
 			public void handle(long now) {
-				reproduce(root);
 				drawAllPlants(root);
+				reproduce(root);
 				generations++;
 				// Write the generation and fitness info the the screen.
 				t.setText("Generation Number: " + Integer.toString(generations) + "\nMax Fitness " + Double.toString(maxFitness) + "\nMin Fitness " + Double.toString(minFitness));
@@ -99,6 +99,8 @@ public class Main extends Application {
 	
 	// Draws a given plant to the root pane.
 	public void drawPlant(Plant plant, Pane root) {
+		plant.removeAllLeaves();
+		
 		// Values for the individual branches and trunks of each plant.
 		double theta, length;
 		Point startPos = plant.groundPos();
@@ -191,12 +193,12 @@ public class Main extends Application {
 	public void calculateFitness(Pane root) {
 		// Reset the fitness of every plant so that existing plants' fitnesses are calculated correctly 
 		for (Plant plant : plants) {
-			plant.setFitness(0);
+			plant.resetFitness();
 		}
 		
 		// Initialize all the points of light.
 		ArrayList<Light> lightPackets = new ArrayList<Light>();
-		for (double i = 0; i <= 22 * 10; i += 1) {
+		for (double i = -10; i <= 32 * 10; i += 1) {
 			Point lightPos = new Point(i, 500);
 			Light light = new Light(lightPos);
 			lightPackets.add(light);
@@ -205,18 +207,38 @@ public class Main extends Application {
 		// Check each light to see if it hit a plant's leaf and then lower the point of light until it hits the ground.
 		for (int i = 500; i > 0; i--) {
 			for (Light light : lightPackets) {
+				// Temporary ArrayList to keep track of which plants this point of light touched at this point in time.
+				ArrayList<Plant> touchedPlants = new ArrayList<Plant>();
 				for (Plant plant : plants) {
-					// Check if the point of the light is in a plant's leaf. (Does not account for being in 2 leaves at once.
-					if (plant.pointInLeaf(light.pos)) {
-						plant.addFitness(light.strength);		// Increase the plant's fitness based on the light's strength.
-						light.strength /= 2;					// Halve the strength of the light so that further leaves absorb less light.
+					// Get an ArrayList of every leaf of this plant that the light is currently touching.
+					ArrayList<Point> temp = plant.leavesTouchingPoint(light.pos);
+					for (Point leaf : temp) {
+						// Check if the light has already touched that leaf (light can only touch each leaf once).
+						if (!light.touchedLeaves.contains(leaf)) {
+							light.touchedLeaves.add(leaf);
+							if (!touchedPlants.contains(plant)) {
+								touchedPlants.add(plant);
+							}
+						}
 					}
+				}
+				if (!touchedPlants.isEmpty()) {
+					// Evenly distribute the energy of the light to every plant it touched.
+					// Plants can't be counted multiple times if the light touched multiple leaves at once.
+					for (Plant plant : touchedPlants) {
+						plant.addFitness(light.strength / touchedPlants.size());
+					}
+					// Deplete the light's strength based on how many plants it touched.
+					light.strength /= (2 * touchedPlants.size());
 				}
 				light.pos.y --;						// Decrease the altitude of the point of light. 
 				// Used to create a bias for taller or shorter plants if desired.
 				//light.strength += 0.001;
 			}
 		}
+		
+		//System.out.println("next gen\n");
+		
 		// Shuffle and sort the plants by fitness.
 		// The shuffle is used to randomize the positions of plants with the same fitness score.
 		Collections.shuffle(plants);

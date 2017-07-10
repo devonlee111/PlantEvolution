@@ -6,4 +6,4 @@ Note:
 
 In this version of the simulation one of the main flaws is that the plants lack any genetic diversity as they all seem to replicate the most fit plant within a couple generations. I will have to look into a way to combat this
 
-This simulation is also currently run and edited from an ide. I hope to create a menu system that will allow you to change settings inside the program in the future.
+This simulation is also currently run and edited from an ide.  I hope to create a menu system that will allow you to change settings inside the program in the future.

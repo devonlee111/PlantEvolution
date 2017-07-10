@@ -88,6 +88,11 @@ public class Plant implements Comparable<Plant> {
 	public double getFitness() {
 		return fitness;
 	}
+	
+	// Reset the fitness to only factor in the cost of the leaves.
+	public void resetFitness() {
+		fitness = leafPos.size() * -5;
+	}
 
 	// Return the position on the ground where the plant grows from.
 	public void setGroundPos(double groundPos) {
@@ -127,6 +132,11 @@ public class Plant implements Comparable<Plant> {
 		return false;
 	}
 	
+	// Remove all leaf points in leafPos.
+	public void removeAllLeaves() {
+		leafPos.clear();
+	}
+	
 	// Checks if a specific Point is in one the the plant's leaves.
 	public boolean pointInLeaf(Point p) {
 		for (Point leaf : leafPos) {
@@ -136,6 +146,17 @@ public class Plant implements Comparable<Plant> {
 			}
 		}
 		return false;
+	}
+	
+	public ArrayList<Point> leavesTouchingPoint(Point p) {
+		ArrayList<Point> leaves = new ArrayList<Point>();
+		for (Point leaf : leafPos) {
+			MyCircle temp = new MyCircle(leaf.x, leaf.y, LEAFSIZE);
+			if (temp.contains(p)) {
+				leaves.add(leaf);
+			}
+		}
+		return leaves;
 	}
 	
 	// Return the ArrayList of leaf positions.
