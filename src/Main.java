@@ -20,12 +20,14 @@ public class Main extends Application {
 	double maxFitness = 0;
 	double minFitness = 0;
 	
-	int windowWidth = 300;
+	int windowWidth = 1500;
 	int generations = 0;		// Keeps track of how many generations have passed.
+	int numSpecies = 1;
 	
 	// ArrayLists to keep all of the plants and which positions on the ground are not being used.
 	// There are specific locations on the ground in which plants start growing.
 	ArrayList<Plant> plants = new ArrayList<Plant>();
+	ArrayList<ArrayList<Plant>> species = new ArrayList<ArrayList<Plant>>();
 	ArrayList<Double> plantPos = new ArrayList<Double>();
 	
 	Text t = new Text(100, 100, "");		// Text that will display information about generations and fitness to the screen.
@@ -35,12 +37,16 @@ public class Main extends Application {
 	public void start(Stage primaryStage) {
 		// Initialize the scene and root pane
 		Pane root = new Pane();
-		Scene scene = new Scene(root, windowWidth * pxUnit, 1000, Color.SKYBLUE);
+		Scene scene = new Scene(root, windowWidth, 1000, Color.SKYBLUE);
 		primaryStage.setScene(scene);
 		primaryStage.show();
 		
 		// Start the simulation.
 		initPlants(root);
+		speciesSeperation();
+		numSpecies = species.size();
+		t.setText("Generation Number: " + Integer.toString(generations) + "\nMax Fitness " + Double.toString(maxFitness) + "\nMin Fitness " + Double.toString(minFitness) + "\nNum Species " + Integer.toString(numSpecies));
+		root.getChildren().addAll(t);
 		simulation(root);
 	}
 	
@@ -50,23 +56,27 @@ public class Main extends Application {
 			@Override
 			public void handle(long now) {
 				drawAllPlants(root);
-				reproduce(root);
+				speciesReproduce(root);
+				//reproduce(root);
 				generations++;
+				numSpecies = species.size();
 				// Write the generation and fitness info the the screen.
-				t.setText("Generation Number: " + Integer.toString(generations) + "\nMax Fitness " + Double.toString(maxFitness) + "\nMin Fitness " + Double.toString(minFitness));
+				t.setText("Generation Number: " + Integer.toString(generations) + "\nMax Fitness " + Double.toString(maxFitness) + "\nMin Fitness " + Double.toString(minFitness) + "\nNum Species " + Integer.toString(numSpecies));
 				root.getChildren().addAll(t);
 				
 				// Limit to the maximum generations if desired.
-				if (generations == 1000000) {
+				if (generations == 10000) {
 					this.stop();
 				}
 				
 				// Make a slight pause between generations if desired.
+				/*
 				try {
-					Thread.sleep(0);
+					Thread.sleep(100);
 				}
 				catch(InterruptedException e) {
 				}
+				*/
 			}
 		};
 		
@@ -149,7 +159,7 @@ public class Main extends Application {
 		}
 	}
 	
-	// Create the initial generation of plants with the basic genomes.
+	// Create the initial generation of plants with the basic genome.
 	public void initPlants(Pane root) {
 		for (int i = 0; i < 20; i++) {
 			Plant temp = new Plant((i + 1) * 10);
@@ -185,6 +195,44 @@ public class Main extends Application {
 			Plant child = new Plant(plantPos.get(pos), p1, p2);
 			plantPos.remove(pos);
 			plants.add(child);
+		}
+	}
+	
+	public void speciesReproduce(Pane root) {
+		calculateFitness(root);
+		removeUnfit();
+		speciesSeperation();
+		
+		for (ArrayList<Plant> currentSpecies : species) {
+			if (currentSpecies.size() == 1) {
+				// Choose a random position to grow the plant from.
+				int pos = (int)(Math.random() * plantPos.size());
+				
+				// Create a new plant with parents p1 and p2.
+				Plant child = new Plant(plantPos.get(pos), currentSpecies.get(0));
+				plantPos.remove(pos);
+				plants.add(child);
+			}
+			else {
+				for (Plant p1 : currentSpecies) {
+					Plant p2 = null;
+					int index2 = -1;
+					
+					// Choose a random other plant that is not p1.
+					do {
+						index2 = (int)(Math.random() * currentSpecies.size());
+						p2 = currentSpecies.get(index2);
+					} while(p2 != p1);
+					
+					// Choose a random position to grow the plant from.
+					int pos = (int)(Math.random() * plantPos.size());
+					
+					// Create a new plant with parents p1 and p2.
+					Plant child = new Plant(plantPos.get(pos), p1, p2);
+					plantPos.remove(pos);
+					plants.add(child);
+				}
+			}
 		}
 	}
 	
@@ -237,8 +285,6 @@ public class Main extends Application {
 			}
 		}
 		
-		//System.out.println("next gen\n");
-		
 		// Shuffle and sort the plants by fitness.
 		// The shuffle is used to randomize the positions of plants with the same fitness score.
 		Collections.shuffle(plants);
@@ -256,6 +302,26 @@ public class Main extends Application {
 			// Add the position where the plants emerge from the ground to the ArrayList of open positions.
 			plantPos.add(plants.get(half).groundPos().x);
 			plants.remove(half);
+		}
+	}
+	
+	public void speciesSeperation() {
+		species.clear();
+		ArrayList<Plant> temp = new ArrayList<Plant>(plants);
+		for (Plant plant : temp) {
+			boolean speciesExists = false;
+			for (ArrayList<Plant> existingSpecies : species) {
+				if (existingSpecies.get(0).sameSpecies(plant)) {
+					existingSpecies.add(plant);
+					speciesExists = true;
+					break;
+				}
+			}
+			if (!speciesExists) {
+				ArrayList<Plant> newSpecies = new ArrayList<Plant>();
+				newSpecies.add(plant);
+				species.add(newSpecies);
+			}
 		}
 	}
 	

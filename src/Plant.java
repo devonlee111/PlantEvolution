@@ -24,8 +24,14 @@ public class Plant implements Comparable<Plant> {
 		for (int i = 0; i < 152; i++) {
 			genome += 'A';
 		}
+		int startingGenePos = (int)(Math.random() * 19) * 8;
+		String startingGene = branchCode;
+		startingGene += "GGAAAA";
+		genome = new StringBuilder(genome).insert(startingGenePos, startingGene).toString();
+		/*
 		genome += branchCode;
 		genome += "GGAAAA";		// The code for a straight branch is added in the last gene slot.
+		*/
 	}
 	
 	// Create a new plant from the genes of 2 parent plants
@@ -43,6 +49,24 @@ public class Plant implements Comparable<Plant> {
 			}
 		}
 		// Give each nucleotide in the plant a very small chance to mutate into a different nucleotide.
+		char[] temp = genome.toCharArray();
+		for (int i = 0; i < genome.length(); i++) {
+			int mutationChance = (int)(Math.random() * 1000); // A 1/1000 chance of mutating each nucleotide.
+			if (mutationChance == 0) {
+				char newNucleotide;
+				do {
+					newNucleotide = nucleotides.charAt((int)(Math.random() * 4));
+				} while(newNucleotide == temp[i]);
+				temp[i] = newNucleotide;
+			}
+		}
+		genome = new String(temp);
+	}
+	
+	// Create a plant with only one parent, effectively cloning the parent with some mutations.
+	public Plant(double groundPos, Plant parent) {
+		this.groundPos = groundPos;
+		this.genome = parent.genome();
 		char[] temp = genome.toCharArray();
 		for (int i = 0; i < genome.length(); i++) {
 			int mutationChance = (int)(Math.random() * 1000); // A 1/1000 chance of mutating each nucleotide.
@@ -207,5 +231,22 @@ public class Plant implements Comparable<Plant> {
 	// Return this plant's genome.
 	public String genome() {
 		return genome;
+	}
+	
+	public int geneticDifference(String otherGenome) {
+		int difference = 0;
+		for (int i = 0; i < genome.length(); i++) {
+			if (genome.charAt(i) != otherGenome.charAt(i)) {
+				difference++;
+			}
+		}
+		return difference;
+	}
+	
+	public boolean sameSpecies(Plant other) {
+		if (geneticDifference(other.genome()) < genome.length() * 0.02) {
+			return true;
+		}
+		return false;
 	}
 }
