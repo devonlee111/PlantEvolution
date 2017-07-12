@@ -15,6 +15,9 @@ public class Plant implements Comparable<Plant> {
 	// The x position on the ground where the plant should start from.
 	private double groundPos;
 	private double fitness;
+	
+	// The weight dictates how likely the plant is to survive to the next generation
+	private int weight;
 	public final double LEAFSIZE = 2.5;
 	private ArrayList<Point> leafPos = new ArrayList<Point>();
 	
@@ -118,6 +121,14 @@ public class Plant implements Comparable<Plant> {
 		fitness = leafPos.size() * -5;
 	}
 
+	public int weight() {
+		return weight;
+	}
+	
+	public void setWeight(int weight) {
+		this.weight = weight;
+	}
+	
 	// Return the position on the ground where the plant grows from.
 	public void setGroundPos(double groundPos) {
 		this.groundPos = groundPos;
@@ -172,6 +183,7 @@ public class Plant implements Comparable<Plant> {
 		return false;
 	}
 	
+	// Return an ArrayList of all the leaves that are touching a given point.
 	public ArrayList<Point> leavesTouchingPoint(Point p) {
 		ArrayList<Point> leaves = new ArrayList<Point>();
 		for (Point leaf : leafPos) {
@@ -233,6 +245,8 @@ public class Plant implements Comparable<Plant> {
 		return genome;
 	}
 	
+	// Calculate the genetic difference between this plant's genome and a given genome.
+	// Every differing nucleotide counts as a difference.
 	public int geneticDifference(String otherGenome) {
 		int difference = 0;
 		for (int i = 0; i < genome.length(); i++) {
@@ -243,8 +257,10 @@ public class Plant implements Comparable<Plant> {
 		return difference;
 	}
 	
+	// Check if another plant is the same species as this one.
+	// Plants of the same species must have a genetic difference of < 5%.
 	public boolean sameSpecies(Plant other) {
-		if (geneticDifference(other.genome()) < genome.length() * 0.02) {
+		if (geneticDifference(other.genome()) < genome.length() * 0.05) {
 			return true;
 		}
 		return false;

@@ -21,17 +21,18 @@ public class Main extends Application {
 	double minFitness = 0;
 	
 	int windowWidth = 1500;
-	int generations = 0;		// Keeps track of how many generations have passed.
-	int numSpecies = 1;
+	int generations = 0;		// Number of generations that have passed.
+	int maxGenerations = 10000;	// Maximum number of generations until the simulation pauses.
+	int numSpecies = 0;			// The number of species in each generation.
+	int maxLeaves = 0;			// The maximum number of leaves on a single plant in each generation.
 	
-	// ArrayLists to keep all of the plants and which positions on the ground are not being used.
-	// There are specific locations on the ground in which plants start growing.
+	// ArrayLists to keep all of the plants, which positions on the ground are not being used, and to group plants into their respective species.
 	ArrayList<Plant> plants = new ArrayList<Plant>();
-	ArrayList<ArrayList<Plant>> species = new ArrayList<ArrayList<Plant>>();
 	ArrayList<Double> plantPos = new ArrayList<Double>();
+	ArrayList<ArrayList<Plant>> species = new ArrayList<ArrayList<Plant>>();
 	
 	Text t = new Text(100, 100, "");		// Text that will display information about generations and fitness to the screen.
-	boolean stopped = true;		// Used to start and stop the simulation.
+	boolean stopped = true;					// Used to start and stop the simulation.
 	
 	@Override
 	public void start(Stage primaryStage) {
@@ -41,11 +42,12 @@ public class Main extends Application {
 		primaryStage.setScene(scene);
 		primaryStage.show();
 		
-		// Start the simulation.
+		// Start the simulation and do initial calculations to write onto the screen.
 		initPlants(root);
+		calculateFitness();
 		speciesSeperation();
 		numSpecies = species.size();
-		t.setText("Generation Number: " + Integer.toString(generations) + "\nMax Fitness " + Double.toString(maxFitness) + "\nMin Fitness " + Double.toString(minFitness) + "\nNum Species " + Integer.toString(numSpecies));
+		t.setText("Generation Number: " + Integer.toString(generations) + "\nMax Leaves: " + Integer.toString(maxLeaves) + "\nMax Fitness " + Double.toString(maxFitness) + "\nMin Fitness " + Double.toString(minFitness) + "\nNum Species " + Integer.toString(numSpecies));
 		root.getChildren().addAll(t);
 		simulation(root);
 	}
@@ -57,15 +59,14 @@ public class Main extends Application {
 			public void handle(long now) {
 				drawAllPlants(root);
 				speciesReproduce(root);
-				//reproduce(root);
 				generations++;
 				numSpecies = species.size();
 				// Write the generation and fitness info the the screen.
-				t.setText("Generation Number: " + Integer.toString(generations) + "\nMax Fitness " + Double.toString(maxFitness) + "\nMin Fitness " + Double.toString(minFitness) + "\nNum Species " + Integer.toString(numSpecies));
+				t.setText("Generation Number: " + Integer.toString(generations) + "\nMax Leaves: " + Integer.toString(maxLeaves) + "\nMax Fitness " + Double.toString(maxFitness) + "\nMin Fitness " + Double.toString(minFitness) + "\nNum Species " + Integer.toString(numSpecies));
 				root.getChildren().addAll(t);
 				
 				// Limit to the maximum generations if desired.
-				if (generations == 10000) {
+				if (generations == maxGenerations) {
 					this.stop();
 				}
 				
@@ -109,7 +110,9 @@ public class Main extends Application {
 	
 	// Draws a given plant to the root pane.
 	public void drawPlant(Plant plant, Pane root) {
-		plant.removeAllLeaves();
+		plant.removeAllLeaves();	// Remove all the current leaves of the plant so it isn't added again.
+		int numLeaves = 0;
+		maxLeaves = 0;				// Reset the maximum number of leaves for the generation.
 		
 		// Values for the individual branches and trunks of each plant.
 		double theta, length;
@@ -132,11 +135,13 @@ public class Main extends Application {
 				// Draw the line representing the trunk.
 				Line line = new Line((startPos.x * pxUnit) + 150, -((startPos.y * pxUnit)) + bottomY, (endPos.x * pxUnit) + 150, -((endPos.y * pxUnit)) + bottomY);
 				line.setStroke(Color.BROWN);
-				line.setStrokeWidth(5);
+				line.setStrokeWidth(1 * pxUnit);
 				root.getChildren().addAll(line);
 				
 				// Check if the gene is a branch.
 				if (geneType == 1) {
+					numLeaves++;
+					
 					// Add the leaf position to the plant.
 					plant.addLeaf(endPos);
 				}
@@ -157,52 +162,31 @@ public class Main extends Application {
 				root.getChildren().addAll(leaf);
 			}
 		}
+		if (numLeaves > maxLeaves) {
+			maxLeaves = numLeaves;
+		}
 	}
 	
 	// Create the initial generation of plants with the basic genome.
 	public void initPlants(Pane root) {
 		for (int i = 0; i < 20; i++) {
-			Plant temp = new Plant((i + 1) * 10);
+			Plant temp = new Plant((i + 2) * 10);
 			drawPlant(temp, root);
 			plants.add(temp);
 		}
 		plantPos.clear();
 	}
-	
-	// Find the most fit plants and reproduce with them randomly.
-	public void reproduce(Pane root) {
-		calculateFitness(root);
-		removeUnfit();
-		
-		// Temporary ArrayList of the most fit plants to avoid editing the original ArrayList while trying to reproduce.
-		ArrayList<Plant> temp = new ArrayList<Plant>(plants);
-		
-		// Reproduce each plant with a random other plant.
-		for (Plant p1 : temp) { 
-			Plant p2 = null;
-			int index2 = -1;
-			
-			// Choose a random other plant that is not p1.
-			do {
-				index2 = (int)(Math.random() * temp.size());
-				p2 = temp.get(index2);
-			} while(p2 != p1);
-			
-			// Choose a random position to grow the plant from.
-			int pos = (int)(Math.random() * plantPos.size());
-			
-			// Create a new plant with parents p1 and p2.
-			Plant child = new Plant(plantPos.get(pos), p1, p2);
-			plantPos.remove(pos);
-			plants.add(child);
-		}
-	}
-	
+
+	// Remove the unfit plants and use the remaining plants to re-populate the next generation.
+	// Plants will only reproduce with plants of the same species or it will clone itself.
 	public void speciesReproduce(Pane root) {
-		calculateFitness(root);
+		calculateFitness();
 		removeUnfit();
 		speciesSeperation();
 		
+		// For each different species check how many plants belong to it.
+		// Clone the plant if there is only one plant.
+		// Randomly select a partner to reproduce with every plant that belongs to a species with more than one plant.
 		for (ArrayList<Plant> currentSpecies : species) {
 			if (currentSpecies.size() == 1) {
 				// Choose a random position to grow the plant from.
@@ -238,7 +222,7 @@ public class Main extends Application {
 	
 	// Use a bunch of points to represent light streaming in from above.
 	// These points of light will increase the fitness of a plant whose leaf it touches based on the light's current strength.
-	public void calculateFitness(Pane root) {
+	public void calculateFitness() {
 		// Reset the fitness of every plant so that existing plants' fitnesses are calculated correctly 
 		for (Plant plant : plants) {
 			plant.resetFitness();
@@ -290,24 +274,75 @@ public class Main extends Application {
 		Collections.shuffle(plants);
 		Collections.sort(plants);
 		
+		// Set the weights of the plants for weighted removal.
+		for (Plant plant : plants) { 
+			plant.setWeight((int)(Math.pow(plants.indexOf(plant), 2)));
+		}
+		
 		maxFitness = plants.get(0).getFitness();
 		minFitness = plants.get(plants.size() - 1).getFitness();
 	}
 	
-	// Assume the plants ArrayList has been sorted.
-	// Remove the half of the plants that are the least fit.
+	/* Assume the plants ArrayList has been sorted.
+	 * Remove any and all plants with a fitness <= 0.
+	 * Remove the half of the plants based on random weighted selection.
+	 * Plants with a lower fitness are given higher weights to be removed.
+	*/
 	public void removeUnfit() {
 		int half = (plants.size() / 2);
-		for (int i = plants.size() - 1; i >= half; i--) {
+		int numRemoved = 0;
+		ArrayList<Plant> dead = new ArrayList<Plant>();		// ArrayList of plants deemed dead so they can be removed.
+		
+		// Check every plant to see if it has a fitness <= 0.
+		for (Plant plant : plants) {
+			if (plant.getFitness() <= 0) {
+				numRemoved++;
+				plantPos.add(plant.groundPos().x);
+				dead.add(plant);
+			}
+		}
+		
+		// Remove all dead plants.
+		for (Plant plant : dead) {
+			plants.remove(plant);
+		}
+		
+		// Use weighted random selection to remove the remaining plants that need to be removed.
+		for (numRemoved = numRemoved; numRemoved < half; numRemoved++) {
 			// Add the position where the plants emerge from the ground to the ArrayList of open positions.
-			plantPos.add(plants.get(half).groundPos().x);
-			plants.remove(half);
+			Plant toRemove = chooseWeightedPlant();
+			plantPos.add(toRemove.groundPos().x);
+			plants.remove(toRemove);
 		}
 	}
 	
+	// Algorithm for randomly selecting a plant based on its weight.
+	public Plant chooseWeightedPlant() {
+		int totalWeight = 0;
+		for (Plant plant : plants) {
+			totalWeight += plant.weight();
+		}
+		//System.out.println(totalWeight + "\n");
+		int random = (int)(Math.random() * totalWeight) + 1;
+		//System.out.println(random);
+		for (Plant plant : plants) {
+			random -= plant.weight();
+			//System.out.println(random + " : " + plant.weight());
+			if (random <= 0) {
+				return plant;
+			}
+		}
+		return null;
+	}
+	
+	// Separate the species into their own ArrayLists
 	public void speciesSeperation() {
 		species.clear();
 		ArrayList<Plant> temp = new ArrayList<Plant>(plants);
+		/* For every plant, check if there is an existing species that it belongs to.
+		 * If there isn't an existing species create a new ArrayList of that species.
+		 * The first plant in a species is the base plant for which other plants are compared to determine if they are the same species.
+		*/
 		for (Plant plant : temp) {
 			boolean speciesExists = false;
 			for (ArrayList<Plant> existingSpecies : species) {
