@@ -1,6 +1,11 @@
 import javafx.stage.Stage;
+
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.event.EventHandler;
@@ -13,22 +18,23 @@ import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 
 public class Main extends Application {
-	double pxUnit = 5;			// Multiplier to make the size of the plants reasonable on the screen.
-	double bottomY = 1000;		// The distance of the ground from the top of the screen.
+	double pxUnit = 3;			// Multiplier to make the size of the plants reasonable on the screen.
+	double bottomY;		// The distance of the ground from the top of the screen.
 
 	// Keeps track of the max and min fitness for each generation.
 	double maxFitness = 0;
 	double minFitness = 0;
-	
-	int windowWidth = 1500;
+	int windowHeight;
+	int windowWidth;
 	int generations = 0;		// Number of generations that have passed.
 	int maxGenerations = 10000;	// Maximum number of generations until the simulation pauses.
 	int numSpecies = 0;			// The number of species in each generation.
 	int maxLeaves = 0;			// The maximum number of leaves on a single plant in each generation.
 	
 	// ArrayLists to keep all of the plants, which positions on the ground are not being used, and to group plants into their respective species.
-	ArrayList<Plant> plants = new ArrayList<Plant>();
-	ArrayList<Double> plantPos = new ArrayList<Double>();
+	List<Plant> plants = new ArrayList<>();
+	List<Leaf> leaves = new ArrayList<>();
+	List<Double> plantPos = new ArrayList<>();
 	ArrayList<ArrayList<Plant>> species = new ArrayList<ArrayList<Plant>>();
 	
 	Text t = new Text(100, 100, "");		// Text that will display information about generations and fitness to the screen.
@@ -36,9 +42,13 @@ public class Main extends Application {
 	
 	@Override
 	public void start(Stage primaryStage) {
+		Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
+		windowHeight = (int)(screensize.height * .9);
+		windowWidth = (int)(screensize.width * .9);
+		bottomY = windowHeight;
 		// Initialize the scene and root pane
 		Pane root = new Pane();
-		Scene scene = new Scene(root, windowWidth, 1000, Color.SKYBLUE);
+		Scene scene = new Scene(root, windowWidth, windowHeight, Color.SKYBLUE);
 		primaryStage.setScene(scene);
 		primaryStage.show();
 		
@@ -71,13 +81,11 @@ public class Main extends Application {
 				}
 				
 				// Make a slight pause between generations if desired.
-				/*
 				try {
-					Thread.sleep(100);
+					Thread.sleep(0);
 				}
 				catch(InterruptedException e) {
 				}
-				*/
 			}
 		};
 		
@@ -101,65 +109,63 @@ public class Main extends Application {
 	public void drawAllPlants(Pane root) {
 		// Clear the screen of old plants.
 		root.getChildren().clear();
+		leaves.clear();
 		
 		// Draw every plant in the plants ArrayList.
 		for (Plant plant : plants) {
 			drawPlant(plant, root);
 		}
+		
+		for (Leaf leaf : leaves) {
+			Circle c = new Circle((leaf.getPos().getX() * pxUnit) + 150, -((leaf.getPos().getY() * pxUnit)) + bottomY, leaf.SIZE * pxUnit);
+			c.setFill(Color.GREEN);
+			root.getChildren().addAll(c);
+		}
 	}
 	
 	// Draws a given plant to the root pane.
 	public void drawPlant(Plant plant, Pane root) {
-		plant.removeAllLeaves();	// Remove all the current leaves of the plant so it isn't added again.
-		int numLeaves = 0;
-		maxLeaves = 0;				// Reset the maximum number of leaves for the generation.
+		plant.setNumLeaves(0);
 		
 		// Values for the individual branches and trunks of each plant.
 		double theta, length;
 		Point startPos = plant.groundPos();
 		Point endPos;
-		
+		int numLeaves = 0;
 		// Go through every gene in the plant and draw it if it is valid.
 		for (int i = 0; i < 20; i++) {
 			// Check if the current gene is a trunk or a branch.
 			// Add a leaf to the plant if it is a branch.
-			int geneType = plant.geneType(i * 8);
+			int geneType = plant.geneType(i * 	8);
 			if (geneType != -1) {
 				// Calculate the end point of the trunk
 				theta = plant.branchAngle(i * 8);
 				length = plant.branchLength(i * 8);
 				theta += 90;
 				theta *= (Math.PI / 180);
-				endPos = new Point((length * Math.cos(theta)) + startPos.x, (length * Math.sin(theta)) + startPos.y);
+				endPos = new Point((length * Math.cos(theta)) + startPos.getX(), (length * Math.sin(theta)) + startPos.getY());
 				
 				// Draw the line representing the trunk.
-				Line line = new Line((startPos.x * pxUnit) + 150, -((startPos.y * pxUnit)) + bottomY, (endPos.x * pxUnit) + 150, -((endPos.y * pxUnit)) + bottomY);
+				Line line = new Line((startPos.getX() * pxUnit) + 150, -((startPos.getY() * pxUnit)) + bottomY, (endPos.getX() * pxUnit) + 150, -((endPos.getY() * pxUnit)) + bottomY);
 				line.setStroke(Color.BROWN);
 				line.setStrokeWidth(1 * pxUnit);
 				root.getChildren().addAll(line);
 				
 				// Check if the gene is a branch.
-				if (geneType == 1) {
-					numLeaves++;
-					
+				if (geneType == 1) {					
 					// Add the leaf position to the plant.
-					plant.addLeaf(endPos);
+					Leaf leaf = new Leaf(plant, endPos);
+					leaves.add(leaf);
+					plant.addLeafCount();
+					numLeaves++;
 				}
 				
 				// Check if the gene is trunk.
 				if (geneType == 0) {
 					// Set the starting point of the next branch or trunk to the end point of this trunk.
-					startPos.x = endPos.x; 
-					startPos.y = endPos.y;
+					startPos.setX(endPos.getX()); 
+					startPos.setY(endPos.getY());
 				}
-			}
-			// Get the leaf positions from the plant and draw them.
-			// This is done after drawing the plant's skeleton so the leaves are drawn in front of the branches and trunks.
-			ArrayList<Point> leaves = plant.getLeaves();
-			for (Point leafToDraw : leaves) {
-				Circle leaf = new Circle((leafToDraw.x * pxUnit) + 150, -((leafToDraw.y * pxUnit)) + bottomY, plant.LEAFSIZE * pxUnit);
-				leaf.setFill(Color.GREEN);
-				root.getChildren().addAll(leaf);
 			}
 		}
 		if (numLeaves > maxLeaves) {
@@ -228,45 +234,23 @@ public class Main extends Application {
 			plant.resetFitness();
 		}
 		
-		// Initialize all the points of light.
-		ArrayList<Light> lightPackets = new ArrayList<Light>();
-		for (double i = -10; i <= 32 * 10; i += 1) {
-			Point lightPos = new Point(i, 500);
-			Light light = new Light(lightPos);
-			lightPackets.add(light);
-		}
-		
-		// Check each light to see if it hit a plant's leaf and then lower the point of light until it hits the ground.
-		for (int i = 500; i > 0; i--) {
-			for (Light light : lightPackets) {
-				// Temporary ArrayList to keep track of which plants this point of light touched at this point in time.
-				ArrayList<Plant> touchedPlants = new ArrayList<Plant>();
-				for (Plant plant : plants) {
-					// Get an ArrayList of every leaf of this plant that the light is currently touching.
-					ArrayList<Point> temp = plant.leavesTouchingPoint(light.pos);
-					for (Point leaf : temp) {
-						// Check if the light has already touched that leaf (light can only touch each leaf once).
-						if (!light.touchedLeaves.contains(leaf)) {
-							light.touchedLeaves.add(leaf);
-							if (!touchedPlants.contains(plant)) {
-								touchedPlants.add(plant);
-							}
-						}
-					}
+		IntervalTree leafIntervals = new IntervalTree();
+		Collections.sort(leaves);
+		double prevHeight = -1;
+		List<Leaf> treeAdditions = new ArrayList<>();
+		for (Leaf leaf : leaves) {
+			if (prevHeight != leaf.getPos().getY()) {
+				prevHeight = leaf.getPos().getY();
+				for (Leaf addLeaf : treeAdditions) {
+					Interval addInterval = new Interval(addLeaf.getPos().getX() - addLeaf.SIZE, addLeaf.getPos().getX() + addLeaf.SIZE);
+					leafIntervals.root = leafIntervals.insert(leafIntervals.root, addInterval);
 				}
-				if (!touchedPlants.isEmpty()) {
-					// Evenly distribute the energy of the light to every plant it touched.
-					// Plants can't be counted multiple times if the light touched multiple leaves at once.
-					for (Plant plant : touchedPlants) {
-						plant.addFitness(light.strength / touchedPlants.size());
-					}
-					// Deplete the light's strength based on how many plants it touched.
-					light.strength /= (2 * touchedPlants.size());
-				}
-				light.pos.y --;						// Decrease the altitude of the point of light. 
-				// Used to create a bias for taller or shorter plants if desired.
-				//light.strength += 0.001;
+				treeAdditions.clear();
 			}
+			treeAdditions.add(leaf);
+			Interval interval = new Interval(leaf.getPos().getX() - leaf.SIZE, leaf.getPos().getX() + leaf.SIZE);
+			int numLeavesAbove = leafIntervals.numOverlaps(leafIntervals.root, interval);
+			leaf.getPlant().addFitness(100 / ((10 * numLeavesAbove) + 1));
 		}
 		
 		// Shuffle and sort the plants by fitness.
@@ -297,7 +281,7 @@ public class Main extends Application {
 		for (Plant plant : plants) {
 			if (plant.getFitness() <= 0) {
 				numRemoved++;
-				plantPos.add(plant.groundPos().x);
+				plantPos.add(plant.groundPos().getX());
 				dead.add(plant);
 			}
 		}
@@ -311,7 +295,7 @@ public class Main extends Application {
 		for (numRemoved = numRemoved; numRemoved < half; numRemoved++) {
 			// Add the position where the plants emerge from the ground to the ArrayList of open positions.
 			Plant toRemove = chooseWeightedPlant();
-			plantPos.add(toRemove.groundPos().x);
+			plantPos.add(toRemove.groundPos().getX());
 			plants.remove(toRemove);
 		}
 	}

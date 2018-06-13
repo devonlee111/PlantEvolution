@@ -1,25 +1,15 @@
-import java.util.ArrayList;
-
 public class Plant implements Comparable<Plant> {
 	// Specific genetic sequences that signify the start of a valid gene
-	// Trunks specify the main body of the plant with branches and trunks starting at the end of each trunk segment.
-	private String trunkCode = "AT";
-	
-	// Branches specify branches of the plant that can't split into more branches and have leaves at the end of them.
-	private String branchCode = "CG";
-	
-	// The nucleotides used in a plant's genome with the index of each nucleotide being the value of the nucleotide in quaternary.
-	private String nucleotides = "ATCG";
+	private String trunkCode = "AT";		// Trunks specify the main body of the plant with no leaves
+	private String branchCode = "CG";		// Branches specify branches only have leaves at the end.
+	private String nucleotides = "ATCG";	// The different nucleotides used in a plant's genome.
 	private String genome = "";
-	
-	// The x position on the ground where the plant should start from.
 	private double groundPos;
 	private double fitness;
 	
 	// The weight dictates how likely the plant is to survive to the next generation
 	private int weight;
-	public final double LEAFSIZE = 2.5;
-	private ArrayList<Point> leafPos = new ArrayList<Point>();
+	private int numLeaves = 0;
 	
 	// Create a new plant with a basic genome.
 	public Plant(double groundPos) {
@@ -31,10 +21,6 @@ public class Plant implements Comparable<Plant> {
 		String startingGene = branchCode;
 		startingGene += "GGAAAA";
 		genome = new StringBuilder(genome).insert(startingGenePos, startingGene).toString();
-		/*
-		genome += branchCode;
-		genome += "GGAAAA";		// The code for a straight branch is added in the last gene slot.
-		*/
 	}
 	
 	// Create a new plant from the genes of 2 parent plants
@@ -118,7 +104,7 @@ public class Plant implements Comparable<Plant> {
 	
 	// Reset the fitness to only factor in the cost of the leaves.
 	public void resetFitness() {
-		fitness = leafPos.size() * -5;
+		fitness = numLeaves * -5;
 	}
 
 	public int weight() {
@@ -139,6 +125,14 @@ public class Plant implements Comparable<Plant> {
 		return new Point(groundPos, 0);
 	}
 	
+	public void setNumLeaves(int numLeaves) {
+		this.numLeaves = numLeaves;
+	}
+	
+	public void addLeafCount() {
+		numLeaves++;
+	}
+	
 	// Check whether the gene at the given index is valid (-1) a trunk (0) or a branch (1)
 	public int geneType(int geneIndex) {
 		if(genome.substring(geneIndex, geneIndex + 2).equals(trunkCode)) {
@@ -149,57 +143,7 @@ public class Plant implements Comparable<Plant> {
 		}
 		return -1;
 	}
-	
-	// Add's a new point where a leaf is if there is not already a leaf there.
-	public void addLeaf(Point leaf) {
-		if (!hasLeaf(leaf)) {
-			leafPos.add(leaf);
-		}
-	}
-	
-	// Checks if the given point has a leaf there already.
-	public boolean hasLeaf(Point leaf) {
-		for (Point existingLeaf : leafPos) {
-			if (existingLeaf.x == leaf.x && existingLeaf.y == leaf.y) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	// Remove all leaf points in leafPos.
-	public void removeAllLeaves() {
-		leafPos.clear();
-	}
-	
-	// Checks if a specific Point is in one the the plant's leaves.
-	public boolean pointInLeaf(Point p) {
-		for (Point leaf : leafPos) {
-			MyCircle temp = new MyCircle(leaf.x, leaf.y, LEAFSIZE);
-			if (temp.contains(p)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	// Return an ArrayList of all the leaves that are touching a given point.
-	public ArrayList<Point> leavesTouchingPoint(Point p) {
-		ArrayList<Point> leaves = new ArrayList<Point>();
-		for (Point leaf : leafPos) {
-			MyCircle temp = new MyCircle(leaf.x, leaf.y, LEAFSIZE);
-			if (temp.contains(p)) {
-				leaves.add(leaf);
-			}
-		}
-		return leaves;
-	}
-	
-	// Return the ArrayList of leaf positions.
-	public ArrayList<Point> getLeaves() {
-		return leafPos;
-	}
-	
+
 	// Return the angle of the branch/trunk at the gene starting at the given index.
 	public double branchAngle(int geneIndex) {
 		double angle = 0.0;
