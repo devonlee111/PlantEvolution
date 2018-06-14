@@ -58,7 +58,7 @@ public class Plant implements Comparable<Plant> {
 		this.genome = parent.genome();
 		char[] temp = genome.toCharArray();
 		for (int i = 0; i < genome.length(); i++) {
-			int mutationChance = (int)(Math.random() * 1000); // A 1/1000 chance of mutating each nucleotide.
+			int mutationChance = (int)(Math.random() * 500); // A 1/1000 chance of mutating each nucleotide.
 			if (mutationChance == 0) {
 				char newNucleotide;
 				do {
@@ -104,7 +104,7 @@ public class Plant implements Comparable<Plant> {
 	
 	// Reset the fitness to only factor in the cost of the leaves.
 	public void resetFitness() {
-		fitness = numLeaves * -5;
+		fitness = 0;
 	}
 
 	public int weight() {

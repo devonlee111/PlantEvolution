@@ -5,11 +5,11 @@ import java.awt.Toolkit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -18,27 +18,32 @@ import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 
 public class Main extends Application {
-	double pxUnit = 3;			// Multiplier to make the size of the plants reasonable on the screen.
-	double bottomY;		// The distance of the ground from the top of the screen.
+	private double pxUnit = 3;			// Multiplier to make the size of the plants reasonable on the screen.
+	private double bottomY;		// The distance of the ground from the top of the screen.
+	private int xOffset = 150;
+	private int yOffset = 0;
 
 	// Keeps track of the max and min fitness for each generation.
-	double maxFitness = 0;
-	double minFitness = 0;
-	int windowHeight;
-	int windowWidth;
-	int generations = 0;		// Number of generations that have passed.
-	int maxGenerations = 10000;	// Maximum number of generations until the simulation pauses.
-	int numSpecies = 0;			// The number of species in each generation.
-	int maxLeaves = 0;			// The maximum number of leaves on a single plant in each generation.
+	private double maxFitness = 0;
+	private double minFitness = 0;
+	private int windowHeight;
+	private int windowWidth;
+	private int generations = 0;		// Number of generations that have passed.
+	private int maxGenerations = -1;	// Maximum number of generations until the simulation pauses.
+	private int numSpecies = 0;			// The number of species in each generation.
+	private int maxLeaves = 0;			// The maximum number of leaves on a single plant in each generation.
 	
 	// ArrayLists to keep all of the plants, which positions on the ground are not being used, and to group plants into their respective species.
-	List<Plant> plants = new ArrayList<>();
-	List<Leaf> leaves = new ArrayList<>();
-	List<Double> plantPos = new ArrayList<>();
-	ArrayList<ArrayList<Plant>> species = new ArrayList<ArrayList<Plant>>();
+	private List<Plant> plants = new ArrayList<>();
+	private List<Leaf> leaves = new ArrayList<>();
+	private List<Double> plantPos = new ArrayList<>();
+	private ArrayList<ArrayList<Plant>> species = new ArrayList<ArrayList<Plant>>();
 	
-	Text t = new Text(100, 100, "");		// Text that will display information about generations and fitness to the screen.
+	private Text t = new Text(100, 100, "");		// Text that will display information about generations and fitness to the screen.
 	boolean stopped = true;					// Used to start and stop the simulation.
+	
+	private Pane root;
+	private Scene scene;
 	
 	@Override
 	public void start(Stage primaryStage) {
@@ -47,8 +52,8 @@ public class Main extends Application {
 		windowWidth = (int)(screensize.width * .9);
 		bottomY = windowHeight;
 		// Initialize the scene and root pane
-		Pane root = new Pane();
-		Scene scene = new Scene(root, windowWidth, windowHeight, Color.SKYBLUE);
+		root = new Pane();
+		scene = new Scene(root, windowWidth, windowHeight, Color.SKYBLUE);
 		primaryStage.setScene(scene);
 		primaryStage.show();
 		
@@ -68,41 +73,73 @@ public class Main extends Application {
 			@Override
 			public void handle(long now) {
 				drawAllPlants(root);
-				speciesReproduce(root);
-				generations++;
-				numSpecies = species.size();
 				// Write the generation and fitness info the the screen.
 				t.setText("Generation Number: " + Integer.toString(generations) + "\nMax Leaves: " + Integer.toString(maxLeaves) + "\nMax Fitness " + Double.toString(maxFitness) + "\nMin Fitness " + Double.toString(minFitness) + "\nNum Species " + Integer.toString(numSpecies));
 				root.getChildren().addAll(t);
-				
-				// Limit to the maximum generations if desired.
-				if (generations == maxGenerations) {
-					this.stop();
-				}
-				
-				// Make a slight pause between generations if desired.
-				try {
-					Thread.sleep(0);
-				}
-				catch(InterruptedException e) {
+				if (!stopped) {
+					speciesReproduce(root);
+					generations++;
+					numSpecies = species.size();
+					
+					// Limit to the maximum generations if desired.
+					if (generations == maxGenerations) {
+						stopped = true;
+					}
+					
+					// Make a slight pause between generations if desired.
+					try {
+						Thread.sleep(0);
+					}
+					catch(InterruptedException e) {
+					}
 				}
 			}
 		};
 		
 		// Check for mouse clicks and either pause or play the simulation.
-		root.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+		scene.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
 				if (!stopped) {
 					stopped = true;
-					timer.stop();
 				}
 				else if (stopped) {
 					stopped = false;
-					timer.start();
 				}
 			}
         });
+		
+		scene.addEventHandler(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+			@Override
+			public void handle(KeyEvent event) {
+				String key = event.getText();
+				switch(key) {
+					case "=":
+						pxUnit += .25;
+						break;
+						
+					case "-":
+						pxUnit -= .25;
+						break;
+						
+					case "w":
+						yOffset += 5;
+						break;
+					case "s":
+						yOffset -= 5;
+						break;
+						
+					case "a":
+						xOffset += 5;
+						break;
+						
+					case "d":
+						xOffset -= 5;
+						break;
+				}
+			}	
+		});
+		timer.start();
 	}
 	
 	// Method the draw every plant to the screen
@@ -117,7 +154,7 @@ public class Main extends Application {
 		}
 		
 		for (Leaf leaf : leaves) {
-			Circle c = new Circle((leaf.getPos().getX() * pxUnit) + 150, -((leaf.getPos().getY() * pxUnit)) + bottomY, leaf.SIZE * pxUnit);
+			Circle c = new Circle((leaf.getPos().getX() * pxUnit) + xOffset, -((leaf.getPos().getY() * pxUnit)) + bottomY + yOffset, leaf.SIZE * pxUnit);
 			c.setFill(Color.GREEN);
 			root.getChildren().addAll(c);
 		}
@@ -146,7 +183,7 @@ public class Main extends Application {
 				endPos = new Point((length * Math.cos(theta)) + startPos.getX(), (length * Math.sin(theta)) + startPos.getY());
 				
 				// Draw the line representing the trunk.
-				Line line = new Line((startPos.getX() * pxUnit) + 150, -((startPos.getY() * pxUnit)) + bottomY, (endPos.getX() * pxUnit) + 150, -((endPos.getY() * pxUnit)) + bottomY);
+				Line line = new Line((startPos.getX() * pxUnit) + xOffset, -((startPos.getY() * pxUnit)) + bottomY + yOffset, (endPos.getX() * pxUnit) + xOffset, -((endPos.getY() * pxUnit)) + bottomY + yOffset);
 				line.setStroke(Color.BROWN);
 				line.setStrokeWidth(1 * pxUnit);
 				root.getChildren().addAll(line);
@@ -175,11 +212,11 @@ public class Main extends Application {
 	
 	// Create the initial generation of plants with the basic genome.
 	public void initPlants(Pane root) {
-		for (int i = 0; i < 20; i++) {
-			Plant temp = new Plant((i + 2) * 10);
-			drawPlant(temp, root);
+		for (int i = 0; i < 200; i++) {
+			Plant temp = new Plant((i + 2) * 20);
 			plants.add(temp);
 		}
+		drawAllPlants(root);
 		plantPos.clear();
 	}
 
@@ -250,7 +287,7 @@ public class Main extends Application {
 			treeAdditions.add(leaf);
 			Interval interval = new Interval(leaf.getPos().getX() - leaf.SIZE, leaf.getPos().getX() + leaf.SIZE);
 			int numLeavesAbove = leafIntervals.numOverlaps(leafIntervals.root, interval);
-			leaf.getPlant().addFitness(100 / ((10 * numLeavesAbove) + 1));
+			leaf.getPlant().addFitness(Math.max(0, (40  - (10 * numLeavesAbove) + (.01 * leaf.getPos().getY()))));
 		}
 		
 		// Shuffle and sort the plants by fitness.
