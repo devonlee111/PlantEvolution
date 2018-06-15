@@ -5,19 +5,20 @@ public class Plant implements Comparable<Plant> {
 	private String nucleotides = "ATCG";	// The different nucleotides used in a plant's genome.
 	private String genome = "";
 	private double groundPos;
+	public int index;
 	private double fitness;
+	private boolean dead = false;
 	
 	// The weight dictates how likely the plant is to survive to the next generation
-	private int weight;
-	private int numLeaves = 0;
+	private double weight;
 	
 	// Create a new plant with a basic genome.
 	public Plant(double groundPos) {
 		this.groundPos = groundPos;
 		for (int i = 0; i < 152; i++) {
-			genome += 'A';
+			genome += 'A';//nucleotides.charAt((int)(Math.random() * 4));
 		}
-		int startingGenePos = (int)(Math.random() * 19) * 8;
+		int startingGenePos = 0;
 		String startingGene = branchCode;
 		startingGene += "GGAAAA";
 		genome = new StringBuilder(genome).insert(startingGenePos, startingGene).toString();
@@ -40,7 +41,7 @@ public class Plant implements Comparable<Plant> {
 		// Give each nucleotide in the plant a very small chance to mutate into a different nucleotide.
 		char[] temp = genome.toCharArray();
 		for (int i = 0; i < genome.length(); i++) {
-			int mutationChance = (int)(Math.random() * 1000); // A 1/1000 chance of mutating each nucleotide.
+			int mutationChance = (int)(Math.random() * 100); // A 1/1000 chance of mutating each nucleotide.
 			if (mutationChance == 0) {
 				char newNucleotide;
 				do {
@@ -58,7 +59,7 @@ public class Plant implements Comparable<Plant> {
 		this.genome = parent.genome();
 		char[] temp = genome.toCharArray();
 		for (int i = 0; i < genome.length(); i++) {
-			int mutationChance = (int)(Math.random() * 500); // A 1/1000 chance of mutating each nucleotide.
+			int mutationChance = (int)(Math.random() * 50); // A 1/1000 chance of mutating each nucleotide.
 			if (mutationChance == 0) {
 				char newNucleotide;
 				do {
@@ -107,11 +108,11 @@ public class Plant implements Comparable<Plant> {
 		fitness = 0;
 	}
 
-	public int weight() {
+	public double weight() {
 		return weight;
 	}
 	
-	public void setWeight(int weight) {
+	public void setWeight(double weight) {
 		this.weight = weight;
 	}
 	
@@ -121,16 +122,8 @@ public class Plant implements Comparable<Plant> {
 	}
 	
 	// Return a point with x being the groundPos of the plant and y being 0
-	public Point groundPos() {
-		return new Point(groundPos, 0);
-	}
-	
-	public void setNumLeaves(int numLeaves) {
-		this.numLeaves = numLeaves;
-	}
-	
-	public void addLeafCount() {
-		numLeaves++;
+	public double groundPos() {
+		return groundPos;
 	}
 	
 	// Check whether the gene at the given index is valid (-1) a trunk (0) or a branch (1)
@@ -208,5 +201,13 @@ public class Plant implements Comparable<Plant> {
 			return true;
 		}
 		return false;
+	}
+	
+	public boolean isDead() {
+		return dead;
+	}
+	
+	public void kill() {
+		dead = true;
 	}
 }
