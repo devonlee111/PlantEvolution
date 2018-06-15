@@ -33,7 +33,7 @@ public class Main extends Application {
 	private int maxGenerations = -1;	// Maximum number of generations until the simulation pauses.
 	private int numSpecies = 0;			// The number of species in each generation.
 	private int maxLeaves = 0;			// The maximum number of leaves on a single plant in each generation.
-	private int numPlants = 200;
+	private int numPlants = 100;
 	
 	// ArrayLists to keep all of the plants, which positions on the ground are not being used, and to group plants into their respective species.
 	private Plant[] plants = new Plant[numPlants];
@@ -168,7 +168,7 @@ public class Main extends Application {
 		Point endPos;
 		int numLeaves = 0;
 		// Go through every gene in the plant and draw it if it is valid.
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < 1000; i++) {
 			// Check if the current gene is a trunk or a branch.
 			// Add a leaf to the plant if it is a branch.
 			int geneType = plant.geneType(i * 	8);
@@ -224,57 +224,65 @@ public class Main extends Application {
 		removeUnfit();
 		//speciesSeperation();
 		
-		// For each different species check how many plants belong to it.
-		// Clone the plant if there is only one plant.
-		// Randomly select a partner to reproduce with every plant that belongs to a species with more than one plant.
-
-		for (int i = 0; i < fitSortPlants.length; i++) {
-			if (fitSortPlants[i].isDead()) {
-				continue;
-			}
-			Plant p1 = fitSortPlants[i];
-			Plant p2 = null;
-			int pos = -1;
-			
-			// Find a plant to reproduce with, within a certain range.
-			for (int j = 1; j < 3; j++) {
-				if (p1.index - j >= 0 && !plants[p1.index - j].isDead()) {
-					p2 = plants[p1.index - j];
+		int offspringRadius = 4;
+		boolean done = false;
+				
+		while(!done) {
+			// For each different species check how many plants belong to it.
+			// Clone the plant if there is only one plant.
+			// Randomly select a partner to reproduce with every plant that belongs to a species with more than one plant.
+			for (int i = 0; i < fitSortPlants.length; i++) {
+				if (fitSortPlants[i].isDead()) {
+					continue;
+				}
+				Plant p1 = fitSortPlants[i];
+				Plant p2 = null;
+				int pos = -1;
+				
+				// Find a plant to reproduce with, within a certain range.
+				for (int j = 1; j < 3; j++) {
+					if (p1.index - j >= 0 && !plants[p1.index - j].isDead()) {
+						p2 = plants[p1.index - j];
+						break;
+					}
+					if (p1.index + j < plants.length && !plants[p1.index + j].isDead()) {
+						p2 = plants[p1.index + j];
+						break;
+					}
+				}
+				
+				// Find location for offspring
+				int j = 1;
+				while(j < offspringRadius) {
+					if (p1.index - j >= 0 && plants[p1.index - j].isDead()) {
+						pos = p1.index - j;
+						break;
+					}
+					if (p1.index + j < plants.length && plants[p1.index + j].isDead()) {
+						pos = p1.index + j;
+						break;
+					}
+					if (p1.index - j < 0 && p1.index + j >= plants.length) {
+						break;
+					}
+					j++;
+				}
+				
+				if (pos == -1) {
+					if (offspringRadius > plants.length / 2) {
+						done = true;
+					}
 					break;
 				}
-				if (p1.index + j < plants.length && !plants[p1.index + j].isDead()) {
-					p2 = plants[p1.index + j];
-					break;
+				if (p2 == null) {
+					plants[pos] = new Plant(plants[pos].groundPos(), p1);
 				}
-			}
-			
-			// Find location for
-			int j = 1;
-			while(true) {
-				if (p1.index - j >= 0 && plants[p1.index - j].isDead()) {
-					pos = p1.index - j;
-					break;
+				else {
+					plants[pos] = new Plant(plants[pos].groundPos(), p1, p2);
 				}
-				if (p1.index + j < plants.length && plants[p1.index + j].isDead()) {
-					pos = p1.index + j;
-					break;
-				}
-				if (p1.index - j < 0 && p1.index + j >= plants.length) {
-					break;
-				}
-				j++;
+				plants[pos].index = pos;
 			}
-			
-			if (pos == -1) {
-				break;
-			}
-			if (p2 == null) {
-				plants[pos] = new Plant(plants[pos].groundPos(), p1);
-			}
-			else {
-				plants[pos] = new Plant(plants[pos].groundPos(), p1, p2);
-			}
-			plants[pos].index = pos;
+			offspringRadius += 2;
 		}
 	}
 	
@@ -317,7 +325,7 @@ public class Main extends Application {
 		
 		// Set the weights of the plants for weighted removal.
 		for (int i = 0; i < fitSortPlants.length; i++) { 
-			fitSortPlants[i].setWeight(i * .5);
+			fitSortPlants[i].setWeight(i * .1);
 		}
 		
 		maxFitness = fitSortPlants[0].getFitness();

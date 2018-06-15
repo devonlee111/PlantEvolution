@@ -15,12 +15,12 @@ public class Plant implements Comparable<Plant> {
 	// Create a new plant with a basic genome.
 	public Plant(double groundPos) {
 		this.groundPos = groundPos;
-		for (int i = 0; i < 152; i++) {
+		for (int i = 0; i < 7992; i++) {
 			genome += 'A';//nucleotides.charAt((int)(Math.random() * 4));
 		}
 		int startingGenePos = 0;
 		String startingGene = branchCode;
-		startingGene += "GGAAAA";
+		startingGene += "GGAAAAAA";
 		genome = new StringBuilder(genome).insert(startingGenePos, startingGene).toString();
 	}
 	
@@ -28,7 +28,7 @@ public class Plant implements Comparable<Plant> {
 	public Plant(double groundPos, Plant p1, Plant p2) {
 		// Randomly choose genes from each parent to put into the offspring's genes.
 		this.groundPos = groundPos;
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < 1000; i++) {
 			int geneIndex = 8 * i;
 			int parent = (int)(Math.random() * 100) + 1;
 			if (parent <= 50) {
